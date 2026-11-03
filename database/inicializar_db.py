@@ -48,6 +48,21 @@ def inicializar_db():
             follower_url TEXT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES usuarios(id)
         )
+
+        
+        
+    """)
+
+        # Evitar repositorios duplicados
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_repositorios_unicos
+        ON repositorios (user_id, github_username, repo_name)
+    """)
+
+    # Evitar followers duplicados
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_followers_unicos
+        ON followers (user_id, github_username, follower_name)
     """)
 
     # Guardamos los cambios realizados.

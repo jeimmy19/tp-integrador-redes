@@ -1,34 +1,97 @@
 
-# Importamos datetime para consultar la fecha y hora del servidor.
 from datetime import datetime
+
+from server.github_api import (
+    obtener_repositorios,
+    obtener_followers
+)
+
+from database.operaciones import (
+    guardar_repositorios,
+    guardar_followers
+)
 
 
 def procesar_comando(mensaje, usuario, clientes_conectados):
     """
-    Recibe un mensaje y determina qué comando debe ejecutar.
-    
-    mensaje: texto enviado por el cliente.
-    usuario: nombre del usuario que envía el mensaje.
-    clientes_conectados: diccionario de clientes conectados.
+    Procesa los comandos enviados por los clientes.
+
+    Args:
+        mensaje: Texto recibido del cliente.
+        usuario: Diccionario con los datos del usuario autenticado.
+        clientes_conectados: Diccionario de usuarios conectados.
+
+    Returns:
+        Una respuesta de texto o un diccionario con una acción del servidor.
     """
 
-    # Separamos el mensaje en palabras.
     partes = mensaje.strip().split()
 
-    # Si el mensaje está vacío, no hacemos nada.
     if not partes:
         return None
 
-    # Obtenemos el comando.
     comando = partes[0].lower()
 
-    # Comando /hora.
-    if comando == "/hora":
+    # Consultar y guardar repositorios de GitHub
+    if comando == "/repos":
+
+        if len(partes) < 2:
+            return "Uso correcto: /repos usuario"
+
+        github_username = partes[1]
+
+        repositorios = obtener_repositorios(github_username)
+
+        if repositorios is None:
+            return "Error al consultar los repositorios de GitHub."
+
+        if not guardar_repositorios(
+            usuario["id"],
+            github_username,
+            repositorios
+        ):
+            return "Error al guardar los repositorios en la base de datos."
+
+        return (
+            f"Se guardaron los repositorios de {github_username} correctamente. "
+            f"Total consultado: {len(repositorios)}"
+        )
+
+    # Consultar y guardar seguidores de GitHub
+    elif comando == "/followers":
+
+        if len(partes) < 2:
+            return "Uso correcto: /followers usuario"
+
+        github_username = partes[1]
+
+        followers = obtener_followers(github_username)
+
+        if followers is None:
+            return "Error al consultar los followers de GitHub."
+
+        if not guardar_followers(
+            usuario["id"],
+            github_username,
+            followers
+        ):
+            return "Error al guardar los followers en la base de datos."
+
+        return (
+            f"Se guardaron los followers de {github_username} correctamente. "
+            f"Total consultado: {len(followers)}"
+        )
+
+    # Consultar la hora del servidor
+    elif comando == "/hora":
+
         hora_actual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
         return f"Hora del servidor: {hora_actual}"
 
-    # Comando /usuarios.
+    # Listar usuarios conectados
     elif comando == "/usuarios":
+
         usuarios = list(clientes_conectados.keys())
 
         if not usuarios:
@@ -36,28 +99,28 @@ def procesar_comando(mensaje, usuario, clientes_conectados):
 
         return "Usuarios conectados: " + ", ".join(usuarios)
 
-    # Comando /todos.
+    # Enviar mensaje a todos los clientes
     elif comando == "/todos":
-        # Verificamos que exista un mensaje después del comando.
+
         if len(partes) < 2:
             return "Uso correcto: /todos mensaje"
 
-        # Recuperamos el mensaje completo.
         texto = " ".join(partes[1:])
 
-        # Devolvemos el mensaje para que el servidor lo distribuya.
         return {
             "tipo": "broadcast",
-            "mensaje": f"[{usuario}]: {texto}"
+            "mensaje": f"[{usuario['username']}]: {texto}"
         }
 
-    # Comando /adios.
+    # Desconectar al usuario
     elif comando == "/adios":
+
         return {
             "tipo": "desconexion",
-            "mensaje": f"¡Hasta luego, {usuario}!"
+            "mensaje": f"¡Hasta luego, {usuario['username']}!"
         }
 
-    # Comando desconocido.
+    # Comando desconocido
     else:
+
         return "Comando no reconocido."
