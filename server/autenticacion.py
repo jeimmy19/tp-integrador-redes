@@ -96,3 +96,28 @@ def autenticar_usuario(username, password):
 
     # Comparamos ambos hashes de forma segura.
     return secrets.compare_digest(hash_guardado, hash_ingresado)
+
+def obtener_usuario(username):
+    """
+    Busca un usuario en la base de datos por su nombre.
+
+    Devuelve su ID y nombre de usuario.
+    """
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        "SELECT id, username FROM usuarios WHERE username = ?",
+        (username,)
+    )
+
+    resultado = cursor.fetchone()
+    conexion.close()
+
+    if resultado is None:
+        return None
+
+    return {
+        "id": resultado[0],
+        "username": resultado[1]
+    }
