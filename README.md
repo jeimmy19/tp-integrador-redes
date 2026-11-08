@@ -1,279 +1,287 @@
 # TP Integrador – Programación sobre Redes
 
-## Descripción del proyecto
+## Sistema de comunicación Cliente-Servidor con Python y Sockets TCP
 
-Este proyecto consiste en el desarrollo de una aplicación cliente-servidor utilizando Python y sockets TCP.
+## 1. Descripción del proyecto
 
-La aplicación permitirá que varios clientes se conecten simultáneamente a un servidor, se autentiquen mediante usuario y contraseña y puedan intercambiar mensajes.
+Este proyecto consiste en el desarrollo de una aplicación de comunicación cliente-servidor utilizando **Python y sockets TCP**, como trabajo integrador de la materia Programación sobre Redes.
 
-También contará con comandos para consultar información de GitHub, almacenar los datos obtenidos en una base de datos SQLite y administrar las conexiones activas.
+El sistema permite establecer conexiones simultáneas entre varios clientes y un servidor, validar usuarios mediante una base de datos SQLite y mantener una comunicación bidireccional mediante mensajes de texto.
 
-El desarrollo se realiza de manera progresiva, incorporando y probando cada funcionalidad.
+Además, incorpora comandos que permiten consultar información, interactuar con la API de GitHub y enviar mensajes a todos los clientes conectados.
 
-## Tecnologías utilizadas
+## 2. Tecnologías utilizadas
 
-| Tecnología | Descripción |
-|---|---|
-| Python 3.14.4 | Lenguaje de programación |
-| Sockets TCP | Comunicación entre cliente y servidor |
-| Threading | Gestión de múltiples conexiones simultáneas |
-| SQLite 3.46.1 | Almacenamiento de usuarios y datos consultados |
-| Requests | Consultas a la API de GitHub |
-| JSON | Intercambio de información entre cliente y servidor |
-| Visual Studio Code | Entorno de desarrollo |
-| Ubuntu WSL2 | Entorno Linux de trabajo |
-| Git y GitHub | Control de versiones y publicación |
+- **Python 3.14.4:** lenguaje de programación.
+- **Sockets TCP:** comunicación entre clientes y servidor.
+- **Threading:** gestión de múltiples conexiones simultáneas.
+- **SQLite:** almacenamiento de usuarios, repositorios y seguidores.
+- **Requests:** realización de solicitudes HTTP a la API de GitHub.
+- **JSON:** intercambio de información entre cliente y servidor.
+- **Hashlib y Secrets:** protección de contraseñas mediante generación de hashes y sales.
+- **Git y GitHub:** control de versiones y alojamiento del proyecto.
+- **Ubuntu WSL2:** entorno de desarrollo.
 
-## Estructura del proyecto
+## 3. Estructura del proyecto
 
 ```text
 tp-integrador-redes/
 │
 ├── client/
-│   ├── __init__.py
 │   └── cliente.py
 │
+├── database/
+│   ├── conexion.py
+│   ├── inicializar_db.py
+│   ├── operaciones.py
+│   └── tp_integrador.db
+│
 ├── server/
-│   ├── __init__.py
 │   ├── autenticacion.py
 │   ├── comandos.py
 │   ├── github_api.py
 │   └── servidor.py
-│
-├── database/
-│   ├── __init__.py
-│   ├── conexion.py
-│   ├── inicializar_db.py
-│   └── operaciones.py
 │
 ├── .gitignore
 ├── README.md
 └── requirements.txt
 ```
 
-> El entorno virtual `.venv` y la base de datos generada no se publican en GitHub.
+### Descripción de los archivos
 
-## Avances realizados
+**Carpeta `client/`**
 
-### 1. Preparación del entorno de desarrollo
+- `cliente.py`: establece la conexión con el servidor, envía las credenciales, recibe mensajes y permite al usuario interactuar mediante comandos.
 
-- Instalación y configuración de Ubuntu mediante WSL2.
-- Preparación del proyecto en Visual Studio Code.
-- Creación del directorio principal `tp-integrador-redes`.
-- Instalación y configuración de Python.
-- Creación del entorno virtual `.venv`.
-- Activación y verificación del entorno virtual.
+**Carpeta `server/`**
 
-### 2. Verificación de herramientas
+- `servidor.py`: inicia el servidor TCP, acepta conexiones y gestiona múltiples clientes mediante hilos.
+- `autenticacion.py`: realiza la validación de las credenciales de los usuarios.
+- `comandos.py`: procesa los comandos enviados por los clientes.
+- `github_api.py`: consulta la API de GitHub para obtener repositorios y seguidores.
 
-Se verificaron las siguientes versiones:
+**Carpeta `database/`**
 
-| Herramienta | Versión |
+- `conexion.py`: administra la conexión con la base de datos SQLite.
+- `inicializar_db.py`: crea las tablas necesarias para el funcionamiento del sistema.
+- `operaciones.py`: contiene las operaciones para almacenar y consultar información.
+- `tp_integrador.db`: base de datos del proyecto.
+
+## 4. Funcionalidades implementadas
+
+### 4.1. Comunicación mediante sockets TCP
+
+Se implementó una arquitectura cliente-servidor utilizando sockets TCP.
+
+El servidor escucha conexiones en el puerto `5000` y permite que varios clientes se conecten simultáneamente.
+
+### 4.2. Concurrencia
+
+Se utiliza el módulo `threading` para atender a cada cliente en un hilo independiente.
+
+Esto permite mantener varias conexiones activas sin bloquear la comunicación de los demás usuarios.
+
+### 4.3. Autenticación de usuarios
+
+Al conectarse, el cliente envía su nombre de usuario y contraseña.
+
+El servidor valida las credenciales utilizando la información almacenada en SQLite.
+
+Las contraseñas se procesan mediante PBKDF2-HMAC con SHA-256, utilizando sales y comparación segura.
+
+Si las credenciales son incorrectas, el servidor rechaza la conexión y finaliza la sesión.
+
+Si son correctas, el cliente recibe un mensaje de bienvenida.
+
+**Importante:** para iniciar sesión, el usuario debe estar previamente registrado en la base de datos.
+
+### 4.4. Comunicación bidireccional
+
+Una vez autenticado, el cliente puede enviar mensajes al servidor y recibir respuestas.
+
+También se implementó la recepción de mensajes mediante un hilo independiente en el cliente.
+
+### 4.5. Comandos disponibles
+
+El sistema reconoce los siguientes comandos:
+
+| Comando | Descripción |
 |---|---|
-| Python | 3.14.4 |
-| pip | 25.1.1 |
-| SQLite | 3.46.1 |
+| `/repos usuario` | Consulta los repositorios públicos de un usuario de GitHub y los almacena en la tabla `repositorios`. |
+| `/followers usuario` | Consulta los seguidores de un usuario de GitHub y los almacena en la tabla `followers`. |
+| `/hora` | Devuelve la fecha y hora actual del servidor. |
+| `/todos mensaje` | Envía un mensaje a todos los clientes conectados. |
+| `/usuarios` | Muestra la lista de usuarios conectados. |
+| `/adios` | Envía un mensaje de despedida y finaliza la conexión del cliente. |
 
-### 3. Organización del proyecto
+### 4.6. Integración con GitHub
 
-Se organizaron los módulos para separar las responsabilidades:
+Se utiliza la biblioteca `requests` para realizar consultas a la API pública de GitHub.
 
-- `client`: comunicación y funcionalidades del cliente.
-- `server`: servidor, autenticación, comandos e integración con GitHub.
-- `database`: conexión, inicialización y operaciones de SQLite.
+La información obtenida se almacena en la base de datos SQLite.
 
-Se incorporaron archivos `__init__.py` para organizar los paquetes de Python y facilitar las importaciones entre módulos.
+Se implementaron las siguientes operaciones:
 
-### 4. Base de datos SQLite
+- Obtener repositorios de un usuario.
+- Obtener seguidores de un usuario.
+- Guardar los resultados en las tablas correspondientes.
+- Evitar registros duplicados mediante restricciones de unicidad.
 
-Se desarrolló el módulo de inicialización de la base de datos.
+## 5. Base de datos
+
+El proyecto utiliza SQLite para almacenar la información.
 
 Se crearon las siguientes tablas:
 
-- `usuarios`: almacenamiento de credenciales de los usuarios.
-- `repositorios`: almacenamiento de repositorios consultados en GitHub.
-- `followers`: almacenamiento de seguidores consultados en GitHub.
-
-También se implementaron:
-
-- Conexión a SQLite.
-- Activación de claves foráneas.
-- Relaciones entre usuarios y datos almacenados.
-- Índices únicos para evitar registros duplicados.
-
-Se verificó la inicialización y conexión a la base de datos.
-
-### 5. Sistema de autenticación
-
-Se desarrolló el módulo `autenticacion.py`, que permite:
-
-- Registrar usuarios.
-- Generar hashes de contraseñas utilizando PBKDF2 con SHA-256.
-- Utilizar salt aleatorio para proteger las contraseñas.
-- Validar las credenciales contra SQLite.
-- Recuperar el identificador y nombre del usuario autenticado.
-
-Se realizaron pruebas de autenticación con credenciales correctas e incorrectas.
-
-### 6. Integración con GitHub API
-
-Se desarrolló el módulo `github_api.py` utilizando la biblioteca Requests.
-
-Se implementaron funciones para:
-
-- Consultar los repositorios públicos de un usuario de GitHub.
-- Consultar sus seguidores.
-- Obtener nombres y enlaces de los resultados.
-- Manejar errores de conexión y respuestas de la API.
-
-Se realizaron consultas de prueba con un usuario real de GitHub.
-
-### 7. Operaciones de almacenamiento
-
-En `database/operaciones.py` se implementaron funciones para:
-
-- Guardar repositorios consultados.
-- Guardar seguidores consultados.
-- Relacionar los registros con el usuario autenticado.
-- Evitar duplicaciones mediante `INSERT OR IGNORE`.
-
-Se verificó que los registros se almacenen correctamente y que las consultas repetidas no generen duplicados.
-
-### 8. Procesamiento de comandos
-
-En `server/comandos.py` se desarrolló la función `procesar_comando()` para interpretar los comandos enviados por los clientes.
-
-| Comando | Funcionalidad |
+| Tabla | Función |
 |---|---|
-| `/repos usuario` | Consulta y almacena repositorios de GitHub |
-| `/followers usuario` | Consulta y almacena seguidores de GitHub |
-| `/hora` | Devuelve la fecha y hora del servidor |
-| `/todos mensaje` | Prepara un mensaje para todos los clientes |
-| `/usuarios` | Lista los usuarios conectados |
-| `/adios` | Prepara la despedida y desconexión |
+| `usuarios` | Almacena los usuarios y sus datos de autenticación. |
+| `repositorios` | Almacena los repositorios obtenidos desde GitHub. |
+| `followers` | Almacena los seguidores obtenidos desde GitHub. |
 
-Se realizaron pruebas individuales de procesamiento de comandos.
+La base de datos se encuentra en:
 
-### 9. Servidor TCP
+```text
+database/tp_integrador.db
+```
 
-Se desarrolló el módulo `servidor.py` utilizando sockets TCP y threading.
+## 6. Instalación y configuración
 
-Actualmente contempla:
-
-- Creación del socket del servidor.
-- Asociación a la dirección y puerto de escucha.
-- Aceptación de conexiones entrantes.
-- Creación de un hilo independiente para atender cada cliente.
-- Recepción y validación de credenciales.
-- Registro de usuarios autenticados.
-- Procesamiento de mensajes y comandos.
-- Preparación de la difusión de mensajes.
-- Eliminación de usuarios al finalizar la sesión.
-
-Se verificó el inicio del servidor y la escucha en el puerto 5000.
-
-### 10. Cliente TCP
-
-Se desarrolló el módulo `cliente.py` para establecer la conexión con el servidor.
-
-Actualmente contempla:
-
-- Conexión mediante sockets TCP.
-- Envío de credenciales en formato JSON.
-- Recepción de la respuesta de autenticación.
-- Creación de un hilo para recibir mensajes del servidor.
-- Envío de mensajes y comandos desde el teclado.
-- Solicitud de desconexión mediante `/adios`.
-
-Se verificó satisfactoriamente la conexión y autenticación de un usuario registrado.
-
-## Funcionalidades previstas y estado de desarrollo
-
-| Funcionalidad | Estado |
-|---|---|
-| Preparación del entorno | Completado |
-| Creación de la base de datos | Completado |
-| Autenticación de usuarios | Implementado y probado |
-| Consulta de repositorios GitHub | Implementado y probado |
-| Consulta de followers GitHub | Implementado y probado |
-| Almacenamiento en SQLite | Implementado y probado |
-| Procesamiento de comandos | Implementado y probado individualmente |
-| Servidor TCP concurrente | Implementado, pendiente de pruebas integrales |
-| Cliente TCP | Implementado, pendiente de pruebas integrales |
-| Chat bidireccional | En desarrollo |
-| Difusión de mensajes a todos los clientes | En desarrollo y pendiente de pruebas |
-| Desconexión controlada | Pendiente de pruebas integrales |
-
-## Instalación y ejecución
-
-### 1. Clonar el repositorio
+### 6.1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/jeimmy19/tp-integrador-redes.git
 ```
 
-Ingresar al directorio:
+Ingresar a la carpeta:
 
 ```bash
 cd tp-integrador-redes
 ```
 
-### 2. Crear el entorno virtual
+### 6.2. Crear el entorno virtual
 
 ```bash
 python3 -m venv .venv
 ```
 
-### 3. Activar el entorno virtual
+### 6.3. Activar el entorno virtual
+
+En Ubuntu o WSL2:
 
 ```bash
 source .venv/bin/activate
 ```
 
-### 4. Instalar las dependencias
+### 6.4. Instalar las dependencias
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### 5. Inicializar la base de datos
+### 6.5. Inicializar la base de datos
+
+Desde la carpeta raíz del proyecto:
 
 ```bash
 python -m database.inicializar_db
 ```
 
-### 6. Iniciar el servidor
+Este comando crea las tablas necesarias para el funcionamiento del sistema.
 
-Desde la raíz del proyecto:
+**Nota:** antes de iniciar el cliente, debe existir al menos un usuario registrado en la tabla `usuarios`.
+
+## 7. Ejecución del sistema
+
+Para probar la comunicación se deben utilizar varias terminales.
+
+### Terminal 1: iniciar el servidor
+
+Activar el entorno virtual y ejecutar:
 
 ```bash
 python -m server.servidor
 ```
 
-El servidor quedará escuchando en el puerto 5000.
+El servidor queda escuchando conexiones en:
 
-### 7. Ejecutar el cliente
+```text
+0.0.0.0:5000
+```
 
-Abrir otra terminal, activar el entorno virtual y ejecutar:
+### Terminal 2: iniciar el primer cliente
 
 ```bash
 python -m client.cliente
 ```
 
-El cliente solicitará las credenciales de un usuario previamente registrado en la base de datos.
+Ingresar las credenciales de un usuario registrado.
 
-## Estado actual del proyecto
+### Terminal 3: iniciar otro cliente
 
-**En desarrollo.**
+```bash
+python -m client.cliente
+```
 
-Se completaron la preparación del entorno, la organización de los módulos, la implementación de SQLite, el sistema de autenticación, la integración con GitHub API y el procesamiento individual de comandos.
+Se pueden abrir varias instancias del cliente para comprobar la comunicación simultánea.
 
-También se implementaron las primeras versiones del servidor TCP y del cliente, incluyendo la autenticación y la estructura de comunicación mediante hilos.
+## 8. Pruebas realizadas
 
-Actualmente se trabaja en completar y verificar la comunicación bidireccional, el intercambio de mensajes entre múltiples clientes y la ejecución integral de todos los comandos.
+Se realizaron pruebas funcionales para verificar el comportamiento del sistema.
 
-## Autoría
+| Prueba | Resultado |
+|---|---|
+| Inicio del servidor TCP | Correcto |
+| Conexión de clientes | Correcto |
+| Conexión simultánea de varios clientes | Correcto |
+| Autenticación de usuarios registrados | Correcto |
+| Rechazo de credenciales incorrectas | Correcto |
+| Comunicación entre cliente y servidor | Correcto |
+| Comando `/hora` | Correcto |
+| Comando `/usuarios` | Correcto |
+| Comando `/todos` | Correcto |
+| Comando `/repos` | Correcto |
+| Comando `/followers` | Correcto |
+| Comando `/adios` | Correcto |
+| Cierre y limpieza de conexiones | Correcto |
 
-Proyecto académico correspondiente al trabajo práctico integrador de la asignatura **Programación sobre Redes**.
+También se verificó la consulta de repositorios de GitHub y su almacenamiento en SQLite.
 
-**Repositorio:** [github.com/jeimmy19/tp-integrador-redes](https://github.com/jeimmy19/tp-integrador-redes)
+## 9. Dependencias
+
+Las bibliotecas externas utilizadas se encuentran registradas en `requirements.txt`.
+
+Para instalarlas:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+El archivo se generó utilizando:
+
+```bash
+pip freeze > requirements.txt
+```
+
+## 10. Estado actual del proyecto
+
+Se encuentran implementadas y probadas las funcionalidades principales solicitadas en el trabajo integrador:
+
+- Servidor TCP.
+- Clientes concurrentes.
+- Autenticación mediante SQLite.
+- Comunicación bidireccional.
+- Procesamiento de comandos.
+- Integración con la API de GitHub.
+- Almacenamiento de repositorios y seguidores.
+- Difusión de mensajes a todos los clientes conectados.
+- Listado de usuarios conectados.
+- Desconexión controlada de clientes.
+
+## 11. Autora
+
+Proyecto desarrollado por Jeimmy Ortiz como trabajo integrador de la materia **Programación sobre Redes**.
+
+Repositorio en GitHub:
+
+https://github.com/jeimmy19/tp-integrador-redes
